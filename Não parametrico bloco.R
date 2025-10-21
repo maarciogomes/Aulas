@@ -1,0 +1,53 @@
+# ========================= #
+# 1. Importar dados
+# ========================= #
+aula <- read.table("clipboard", dec = ",", header = TRUE)
+colnames(aula) <- c("Tratamento", "Bloco", "Valor")
+
+# Converter variáveis para os tipos adequados
+aula$Tratamento <- as.factor(aula$Tratamento)
+aula$Bloco <- as.factor(aula$Bloco)
+aula$Valor <- as.numeric(aula$Valor)
+
+# Verificar estrutura dos dados
+head(aula)
+str(aula)
+
+# ========================= #
+# 2. Teste de Friedman
+# ========================= #
+teste_friedman <- friedman.test(Valor ~ Tratamento | Bloco, data = aula)
+print(teste_friedman)
+
+# ========================= #
+# 3. Pós-hoc de Dunn (opcional)
+# ========================= #
+# OBS: só é necessário se p-value < 0.05 no teste de Friedman
+
+if (teste_friedman$p.value < 0.05) {
+  # Instalar PMCMRplus se não estiver instalado
+  if (!require(PMCMRplus)) {
+    install.packages("PMCMRplus", dependencies = TRUE)
+    library(PMCMRplus)
+  }
+  
+  poshoc <- frdAllPairsDunnTest(Valor ~ Tratamento | Bloco, data = aula, p.adjust.method = "holm")
+  print(poshoc)
+} else {
+  cat("\nPós-hoc não necessário (p-valor >= 0.05)\n")
+}
+
+# ========================= #
+# 4. Boxplot para visualizar
+# ========================= #
+if (!require(ggplot2)) install.packages("ggplot2", dependencies = TRUE)
+library(ggplot2)
+
+ggplot(aula, aes(x = Tratamento, y = Valor)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Teste de Friedman - Comparação entre Tratamentos",
+       x = "Tratamentos",
+       y = "Valor observado") +
+  theme_minimal()
+
+
